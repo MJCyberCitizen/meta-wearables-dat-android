@@ -13,23 +13,22 @@ jobs:
         working-directory: samples/CameraAccess
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
+      # The ubuntu-latest runner ships with the Android SDK preinstalled at $ANDROID_HOME.
       # Developer Mode builds use 0 for both values (attestation is skipped).
       - name: Create local.properties
         run: |
+          echo "Using Android SDK at: $ANDROID_HOME"
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "mwdat_application_id=0" >> local.properties
           echo "mwdat_client_token=0" >> local.properties
@@ -37,10 +36,11 @@ jobs:
       - name: Build debug APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: CameraAccess-debug-apk
           path: samples/CameraAccess/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
