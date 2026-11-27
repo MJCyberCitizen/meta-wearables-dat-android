@@ -1,0 +1,46 @@
+name: Build CameraAccess APK
+
+on:
+  workflow_dispatch:   # run manually from the Actions tab
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: samples/CameraAccess
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Developer Mode builds use 0 for both values (attestation is skipped).
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "mwdat_application_id=0" >> local.properties
+          echo "mwdat_client_token=0" >> local.properties
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CameraAccess-debug-apk
+          path: samples/CameraAccess/app/build/outputs/apk/debug/*.apk
